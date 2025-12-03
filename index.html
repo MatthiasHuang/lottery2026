@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>年終驚喜抽獎 - 典雅版</title>
+    <style>
+        /* 🎨 顏色與字體設定 (典雅暗色底亮字) */
+        :root {
+            --primary: #b3884d; /* 柔和金色/青銅色 (Accent) */
+            --secondary: #f0f0f0; /* 柔和白色 (Main text accent) */
+            --bg-gradient: linear-gradient(135deg, #0a0a0a 0%, #171717 100%); /* 極深木炭色 */
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Microsoft JhengHei', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px; /* 增加最大寬度 */
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 3rem; /* 字體加大 */
+            margin: 0;
+            letter-spacing: 3px;
+            /* 標題漸變效果 */
+            background: -webkit-linear-gradient(top, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .header p {
+            color: #a1a1aa;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px; /* 圓角加大 */
+            padding: 40px; /* 內邊距加大 */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .stage {
+            min-height: 380px; /* 舞台高度增加 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .label-text {
+            color: var(--primary);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* 🏆 核心字體加大 🏆 */
+        .winner-name {
+            font-size: 5rem; 
+            font-weight: 900;
+            margin: 15px 0;
+            min-height: 1.2em;
+            color: var(--secondary);
+            text-shadow: 0 0 50px rgba(179, 136, 77, 0.8); /* 金色光暈 */
+            line-height: 1;
+            transition: all 0.1s; /* for animation */
+        }
+
+        .gift-box {
+            margin-top: 30px;
+            padding: 30px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            width: 90%;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid var(--primary);
+        }
+
+        .gift-box.show {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .gift-name {
+            font-size: 2.5rem; /* 字體加大 */
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .provider-name {
+            font-size: 1.3rem;
+            color: #d4d4d8;
+            font-style: italic;
+        }
+
+        .btn-draw {
+            background: linear-gradient(135deg, #606060 0%, #303030 100%); /* 沉穩的金屬灰 */
+            border: 3px solid var(--primary);
+            color: var(--primary);
+            padding: 22px 50px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.7rem; /* 字體加大 */
+            box-shadow: 0 4px 25px rgba(179, 136, 77, 0.4);
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .btn-draw:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(179, 136, 77, 0.8);
+            filter: brightness(1.2);
+            color: var(--secondary);
+        }
+
+        .btn-draw:disabled {
+            background: #27272a;
+            border-color: #52525b;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            color: #a1a1aa;
+        }
+
+        /* 紀錄區樣式 */
+        .history-list {
+            gap: 15px;
+            max-height: 550px;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 18px 25px;
+            border-radius: 15px;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .history-item:first-child {
+            background: rgba(255, 255, 255, 0.15);
+            border-left-color: var(--primary);
+            border: 1px solid var(--primary);
+            border-left: 5px solid var(--primary);
+        }
+
+        .h-winner {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--secondary);
+        }
+        
+        .h-gift {
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .h-provider {
+            font-size: 0.9rem;
+            color: #a1a1aa;
+        }
+
+        /* 📱 手機友善優化 (Mobile Responsiveness) */
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .container { margin-top: 20px; gap: 20px; }
+            .card { padding: 25px; border-radius: 20px; }
+
+            .header h1 { font-size: 2.2rem; }
+            .header p { font-size: 0.9rem; }
+
+            .stage { min-height: 300px; }
+            
+            /* 核心字體縮小以防溢出 */
+            .winner-name { font-size: 3rem; margin: 10px 0; }
+            .gift-name { font-size: 1.8rem; }
+            .provider-name { font-size: 1rem; }
+
+            .btn-draw { 
+                font-size: 1.3rem; 
+                padding: 18px 30px;
+            }
+
+            .history-item {
+                padding: 15px;
+                grid-template-columns: 1fr; /* 在手機上堆疊 */
+            }
+            .h-gift-info {
+                text-align: left;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>✨ 歲末交換禮物派對 ✨</h1>
+        <p>老少咸宜 | 絕無黑箱 | </p>
+    </div>
+
+    <div id="errorDisplay" class="error-msg"></div>
+
+    <div id="gameCard" class="card">
+        <div class="stage">
+            <div class="label-text">WHO IS NEXT?</div>
+            <div id="winnerDisplay" class="winner-name">準備開始</div>
+            
+            <div id="giftBox" class="gift-box">
+                <div class="label-text" style="font-size:0.8rem; letter-spacing:3px;">THE PRIZE IS</div>
+                <div id="giftNameDisplay" class="gift-name">???</div>
+                <div id="providerDisplay" class="provider-name">???</div>
+            </div>
+        </div>
+
+        <button id="drawBtn" class="btn-draw" onclick="drawNext()">🎲 啟動抽獎</button>
+        
+        <div class="stats">
+            總參與: <span id="totalPeople">0</span> | 
+            待揭曉: <span id="remainingCount">0</span>
+        </div>
+    </div>
+
+    <div class="card history-section">
+        <div class="history-title">
+            <span>🏆 獲獎快訊 (最新在最上)</span>
+            <span style="font-size:0.9rem; opacity:0.6">History</span>
+        </div>
+        <div id="historyList" class="history-list">
+            <div id="emptyMsg" style="text-align:center; color:rgba(255,255,255,0.2); padding:30px;">
+                等待第一位幸運兒...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    //       👇👇👇 請在此修改名單 👇👇👇
+    // ==========================================
+    
+    // 您的名單
+    const participantsData = [
+      { name: '小左', gift: '狼牙棒' },
+      { name: '大隻', gift: '按摩棒' },
+      { name: '燙大', gift: '燙髮棒' },
+      { name: 'Jojo', gift: '玉米棒' },
+      { name: 'Z 大', gift: '大肉棒' },
+      { name: '小柯', gift: '有夠棒' },
+      { name: '海哥', gift: '金菇棒' },
+      { name: '捲毛', gift: '衝天棒' },
+      { name: 'Ian', gift: null },
+    ];
+
+    // ==========================================
+    //       👆👆👆 修改結束，以下勿動 👆👆👆
+    // ==========================================
+
+    let drawPool = [];
+    let currentIndex = 0;
+    let isAnimating = false;
+
+    window.onload = function() {
+        const giftCount = participantsData.filter(p => p.gift).length;
+        
+        document.getElementById('totalPeople').innerText = participantsData.length;
+        
+        if (participantsData.length < 2) {
+            showError("人數不足，至少需要 2 人才能進行交換！");
+            return;
+        }
+        if (giftCount === 0) {
+            showError("沒有人準備禮物，無法進行抽獎！");
+            return;
+        }
+
+        // 開始計算配對
+        const success = calculateRobustMatches();
+        
+        if (success) {
+            document.getElementById('remainingCount').innerText = drawPool.length;
+        } else {
+            showError("配對運算失敗！請檢查是否只有一個人有禮物，或配置無法滿足「不抽到自己」的條件。");
+        }
+    };
+
+    function showError(msg) {
+        const err = document.getElementById('errorDisplay');
+        err.style.display = 'block';
+        err.innerText = "⚠️ " + msg;
+        document.getElementById('drawBtn').disabled = true;
+        document.getElementById('drawBtn').style.opacity = 0.5;
+    }
+
+    // --- 強化版 Fisher-Yates 洗牌算法 ---
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            let randomVal;
+            if (window.crypto && window.crypto.getRandomValues) {
+                const array32 = new Uint32Array(1);
+                window.crypto.getRandomValues(array32);
+                randomVal = array32[0] / (0xffffffff + 1);
+            } else {
+                randomVal = Math.random();
+            }
+            
+            const j = Math.floor(randomVal * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // --- 核心演算 v2.0：雙重亂數配對 (保持與前一版本一致的穩健邏輯) ---
+    function calculateRobustMatches() {
+        let sourcePool = [...participantsData];
+        shuffle(sourcePool); 
+
+        let gifts = sourcePool.filter(p => p.gift).map(p => ({
+            provider: p.name,
+            giftName: p.gift
+        }));
+        
+        let receivers = sourcePool.map(p => p.name);
+        
+        let isValid = false;
+        let attempt = 0;
+        let finalMatches = [];
+
+        while (!isValid && attempt < 5000) {
+            attempt++;
+            
+            shuffle(receivers);
+            shuffle(gifts); 
+
+            let tempMatches = [];
+            let currentRoundValid = true;
+
+            for (let i = 0; i < gifts.length; i++) {
+                const receiver = receivers[i];
+                const giftObj = gifts[i];
+
+                if (receiver === giftObj.provider) {
+                    currentRoundValid = false;
+                    break; 
+                }
+
+                tempMatches.push({
+                    winner: receiver,
+                    prize: giftObj.giftName,
+                    provider: giftObj.provider
+                });
+            }
+
+            if (currentRoundValid) {
+                isValid = true;
+                finalMatches = tempMatches;
+            }
+        }
+
+        if (isValid) {
+            shuffle(finalMatches);
+            drawPool = finalMatches;
+            console.log(`配對成功，嘗試次數: ${attempt}`);
+            return true;
+        }
+        return false;
+    }
+
+    function drawNext() {
+        if (isAnimating) return;
+        if (currentIndex >= drawPool.length) return;
+
+        isAnimating = true;
+        const btn = document.getElementById('drawBtn');
+        const winnerEl = document.getElementById('winnerDisplay');
+        const giftBoxEl = document.getElementById('giftBox');
+        
+        btn.disabled = true;
+        giftBoxEl.classList.remove('show');
+        
+        const countLimit = 30;
+        let count = 0;
+        const targetResult = drawPool[currentIndex];
+        const remainingNames = participantsData.map(p => p.name);
+
+        const interval = setInterval(() => {
+            const randomName = remainingNames[Math.floor(Math.random() * remainingNames.length)];
+            winnerEl.innerText = randomName;
+            winnerEl.style.opacity = 0.8;
+            
+            // 微微縮放特效
+            const scale = 0.9 + Math.random() * 0.2;
+            winnerEl.style.transform = `scale(${scale})`;
+            
+            count++;
+            if (count >= countLimit) {
+                clearInterval(interval);
+                winnerEl.style.transform = "scale(1)";
+                revealWinner(targetResult);
+            }
+        }, 60);
+    }
+
+    function revealWinner(result) {
+        const winnerEl = document.getElementById('winnerDisplay');
+        const giftBoxEl = document.getElementById('giftBox');
+        const giftNameEl = document.getElementById('giftNameDisplay');
+        const providerEl = document.getElementById('providerDisplay');
+        const btn = document.getElementById('drawBtn');
+
+        // 1. 鎖定得獎者
+        winnerEl.innerText = result.winner;
+        winnerEl.style.opacity = 1;
+        winnerEl.style.color = 'var(--secondary)'; // 主色變為柔和白色
+        winnerEl.style.textShadow = "0 0 50px rgba(179, 136, 77, 0.8)"; // 金色光暈
+
+        // 2. 顯示禮物 (延遲)
+        setTimeout(() => {
+            giftNameEl.innerText = result.prize;
+            providerEl.innerText = `(感謝 ${result.provider} 提供)`;
+            giftBoxEl.classList.add('show');
+            
+            addHistory(result);
+            
+            currentIndex++;
+            document.getElementById('remainingCount').innerText = drawPool.length - currentIndex;
+            isAnimating = false;
+            
+            if (currentIndex >= drawPool.length) {
+                btn.innerText = "🎊 抽獎圓滿結束 🎊";
+                btn.disabled = true;
+                btn.style.background = "#27272a";
+                btn.style.borderColor = "#52525b";
+            } else {
+                btn.disabled = false;
+            }
+        }, 800);
+    }
+
+    function addHistory(result) {
+        const list = document.getElementById('historyList');
+        const emptyMsg = document.getElementById('emptyMsg');
+        if (emptyMsg) emptyMsg.remove();
+
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+            <div class="h-winner">👑 ${result.winner}</div>
+            <div class="h-gift-info">
+                <div class="h-gift">${result.prize}</div>
+                <span class="h-provider">from ${result.provider}</span>
+            </div>
+        `;
+        
+        list.prepend(div);
+    }
+
+</script>
+</body>
+</html>
