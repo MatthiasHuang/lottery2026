@@ -272,24 +272,25 @@
 
 <script>
     // ==========================================
-    //       👇👇👇 請在此修改名單 👇👇👇
+    //    👇👇👇 請在此修改名單 👇👇👇
     // ==========================================
     
     // 您的名單
     const participantsData = [
-      { name: '小左', gift: 'Tenga 七彩豪華版' },
-      { name: '大隻', gift: 'XGPU 一年份序號' },
-      { name: '燙大', gift: '燙髮棒' },
-      { name: 'Jojo', gift: '玉米棒' },
-      { name: 'Z 大', gift: '大肉棒' },
-      { name: '小柯', gift: '有夠棒' },
-      { name: '海哥', gift: '驚奇箱' },
-      { name: '捲毛', gift: '衝天棒' },
-      { name: 'Ian', gift: null },
+      // 禮物名稱 (gift) 欄位只要有值 (非 null/undefined/空字串) 就會被視為有提供禮物
+      { name: '小左', gift: '禮物 A' }, // 有禮物
+      { name: '大隻', gift: '禮物 B' }, // 有禮物
+      { name: '燙大', gift: '禮物 C' }, // 有禮物
+      { name: 'Jojo', gift: '禮物 D' }, // 有禮物
+      { name: 'Z 大', gift: '禮物 E' }, // 有禮物
+      { name: '小柯', gift: '禮物 F' }, // 有禮物
+      { name: '海哥', gift: '禮物 G' }, // 有禮物
+      { name: '捲毛', gift: '禮物 H' }, // 有禮物
+      { name: 'Ian', gift: null }, // 沒有禮物 (不影響抽獎，只影響是否為提供者)
     ];
 
     // ==========================================
-    //       👆👆👆 修改結束，以下勿動 👆👆👆
+    //    👆👆👆 修改結束，以下勿動 👆👆👆
     // ==========================================
 
     let drawPool = [];
@@ -345,44 +346,48 @@
         }
     }
 
-    // --- 核心演算 v2.0：雙重亂數配對 (保持與前一版本一致的穩健邏輯) ---
+    // --- 核心演算 v3.0：改為抽提供者的禮物 (不抽到自己的禮物) ---
     function calculateRobustMatches() {
-        let sourcePool = [...participantsData];
-        shuffle(sourcePool); 
-
-        let gifts = sourcePool.filter(p => p.gift).map(p => ({
-            provider: p.name,
-            giftName: p.gift
-        }));
-        
-        let receivers = sourcePool.map(p => p.name);
+        // 1. 找出所有提供禮物的人 (Providers)
+        let providers = participantsData.filter(p => p.gift).map(p => p.name);
+        // 2. 找出所有收禮物的人 (Receivers)
+        let receivers = participantsData.map(p => p.name);
         
         let isValid = false;
         let attempt = 0;
         let finalMatches = [];
 
+        // 循環嘗試配對，直到找到有效組合 (收禮者 != 提供者)
         while (!isValid && attempt < 5000) {
             attempt++;
             
+            // 每次嘗試都重新洗牌
             shuffle(receivers);
-            shuffle(gifts); 
+            shuffle(providers); 
 
             let tempMatches = [];
             let currentRoundValid = true;
+            
+            // 配對數量取決於禮物的數量（即提供者的數量）
+            for (let i = 0; i < providers.length; i++) {
+                // 必須要有足夠的收禮者來對應禮物
+                if (i >= receivers.length) {
+                    currentRoundValid = false; // 理論上不該發生，除非 participantsData 結構異常
+                    break;
+                }
 
-            for (let i = 0; i < gifts.length; i++) {
                 const receiver = receivers[i];
-                const giftObj = gifts[i];
+                const provider = providers[i];
 
-                if (receiver === giftObj.provider) {
+                if (receiver === provider) {
                     currentRoundValid = false;
-                    break; 
+                    break;  
                 }
 
                 tempMatches.push({
-                    winner: receiver,
-                    prize: giftObj.giftName,
-                    provider: giftObj.provider
+                    winner: receiver, // 收禮者
+                    prize: `恭喜抽到 ${provider} 的禮物`, // 顯示提供者名字
+                    provider: provider // 禮物提供者
                 });
             }
 
@@ -393,7 +398,8 @@
         }
 
         if (isValid) {
-            shuffle(finalMatches);
+            // 最後再將抽獎順序打亂，確保結果的公平性
+            shuffle(finalMatches); 
             drawPool = finalMatches;
             console.log(`配對成功，嘗試次數: ${attempt}`);
             return true;
@@ -416,10 +422,12 @@
         const countLimit = 30;
         let count = 0;
         const targetResult = drawPool[currentIndex];
-        const remainingNames = participantsData.map(p => p.name);
+        // 參與者名單用於滾動效果
+        const allNames = participantsData.map(p => p.name);
 
         const interval = setInterval(() => {
-            const randomName = remainingNames[Math.floor(Math.random() * remainingNames.length)];
+            // 從所有參與者中隨機選取名字進行滾動
+            const randomName = allNames[Math.floor(Math.random() * allNames.length)];
             winnerEl.innerText = randomName;
             winnerEl.style.opacity = 0.8;
             
@@ -451,8 +459,10 @@
 
         // 2. 顯示禮物 (延遲)
         setTimeout(() => {
-            giftNameEl.innerText = result.prize;
-            providerEl.innerText = `(感謝 ${result.provider} 提供)`;
+            // *** 這裡使用新的顯示邏輯 ***
+            giftNameEl.innerText = result.prize; // 顯示: 恭喜抽到 [提供者] 的禮物
+            providerEl.innerText = `🎉 妖壽讚`; // 顯示: 驚喜提示
+            
             giftBoxEl.classList.add('show');
             
             addHistory(result);
