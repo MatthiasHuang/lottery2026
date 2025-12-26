@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>年終驚喜抽獎 - 典雅版</title>
+    <title>♥ ㊣ (純) 激烈交流群組溫腥尾牙 ㊣ ♥ </title>
     <style>
         /* 🎨 顏色與字體設定 (典雅暗色底亮字) */
         :root {
@@ -271,235 +271,241 @@
 </div>
 
 <script>
-    // ==========================================
-    //    👇👇👇 請在此修改名單 👇👇👇
-    // ==========================================
+// ==========================================
+//    👇👇👇 請在此修改名單 👇👇👇
+// ==========================================
+
+// 您的名單
+const participantsData = [
+    { name: '小左', gift: '禮物 A' },
+    { name: '大隻', gift: '禮物 B' }, // 終極大獎提供者
+    { name: '燙大', gift: '禮物 C' },
+    { name: 'Jojo', gift: '禮物 D' },
+    { name: 'Z 大', gift: '禮物 E' },
+    { name: '小柯', gift: '禮物 F' },
+    { name: '海哥', gift: '禮物 G' },
+    { name: '捲毛', gift: '禮物 H' },
+    { name: 'Ian', gift: '禮物 I' },
+];
+
+// ==========================================
+//    👆👆👆 修改結束，以下勿動 👆👆👆
+// ==========================================
+
+let drawPool = [];
+let currentIndex = 0;
+let isAnimating = false;
+let isUltimateStage = false; // 是否進入終極大獎階段
+
+window.onload = function() {
+    const giftCount = participantsData.filter(p => p.gift).length;
+    document.getElementById('totalPeople').innerText = participantsData.length;
     
-    // 您的名單
-    const participantsData = [
-      // 禮物名稱 (gift) 欄位只要有值 (非 null/undefined/空字串) 就會被視為有提供禮物
-      { name: '小左', gift: '禮物 A' }, // 有禮物
-      { name: '大隻', gift: '禮物 B' }, // 有禮物
-      { name: '燙大', gift: '禮物 C' }, // 有禮物
-      { name: 'Jojo', gift: '禮物 D' }, // 有禮物
-      { name: 'Z 大', gift: '禮物 E' }, // 有禮物
-      { name: '小柯', gift: '禮物 F' }, // 有禮物
-      { name: '海哥', gift: '禮物 G' }, // 有禮物
-      { name: '捲毛', gift: '禮物 H' }, // 有禮物
-      { name: 'Ian', gift: '禮物 I' }, // 沒有禮物 (不影響抽獎，只影響是否為提供者)
-    ];
-
-    // ==========================================
-    //    👆👆👆 修改結束，以下勿動 👆👆👆
-    // ==========================================
-
-    let drawPool = [];
-    let currentIndex = 0;
-    let isAnimating = false;
-
-    window.onload = function() {
-        const giftCount = participantsData.filter(p => p.gift).length;
-        
-        document.getElementById('totalPeople').innerText = participantsData.length;
-        
-        if (participantsData.length < 2) {
-            showError("人數不足，至少需要 2 人才能進行交換！");
-            return;
-        }
-        if (giftCount === 0) {
-            showError("沒有人準備禮物，無法進行抽獎！");
-            return;
-        }
-
-        // 開始計算配對
-        const success = calculateRobustMatches();
-        
-        if (success) {
-            document.getElementById('remainingCount').innerText = drawPool.length;
-        } else {
-            showError("配對運算失敗！請檢查是否只有一個人有禮物，或配置無法滿足「不抽到自己」的條件。");
-        }
-    };
-
-    function showError(msg) {
-        const err = document.getElementById('errorDisplay');
-        err.style.display = 'block';
-        err.innerText = "⚠️ " + msg;
-        document.getElementById('drawBtn').disabled = true;
-        document.getElementById('drawBtn').style.opacity = 0.5;
+    if (participantsData.length < 2) {
+        showError("人數不足，至少需要 2 人才能進行交換！");
+        return;
+    }
+    if (giftCount === 0) {
+        showError("沒有人準備禮物，無法進行抽獎！");
+        return;
     }
 
-    // --- 強化版 Fisher-Yates 洗牌算法 ---
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            let randomVal;
-            if (window.crypto && window.crypto.getRandomValues) {
-                const array32 = new Uint32Array(1);
-                window.crypto.getRandomValues(array32);
-                randomVal = array32[0] / (0xffffffff + 1);
-            } else {
-                randomVal = Math.random();
+    const success = calculateRobustMatches();
+    if (success) {
+        document.getElementById('remainingCount').innerText = drawPool.length;
+    } else {
+        showError("配對運算失敗！請檢查配置是否無法滿足「不抽到自己」的條件。");
+    }
+};
+
+function showError(msg) {
+    const err = document.getElementById('errorDisplay');
+    err.style.display = 'block';
+    err.innerText = "⚠️ " + msg;
+    document.getElementById('drawBtn').disabled = true;
+    document.getElementById('drawBtn').style.opacity = 0.5;
+}
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let randomVal = (window.crypto && window.crypto.getRandomValues) 
+            ? window.crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff + 1) 
+            : Math.random();
+        const j = Math.floor(randomVal * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function calculateRobustMatches() {
+    let providers = participantsData.filter(p => p.gift).map(p => p.name);
+    let receivers = participantsData.map(p => p.name);
+    let isValid = false;
+    let attempt = 0;
+    let finalMatches = [];
+
+    while (!isValid && attempt < 5000) {
+        attempt++;
+        shuffle(receivers);
+        shuffle(providers); 
+        let tempMatches = [];
+        let currentRoundValid = true;
+        
+        for (let i = 0; i < providers.length; i++) {
+            if (receivers[i] === providers[i]) {
+                currentRoundValid = false;
+                break;  
             }
-            
-            const j = Math.floor(randomVal * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+            tempMatches.push({
+                winner: receivers[i],
+                prize: `恭喜抽到 ${providers[i]} 的禮物`,
+                provider: providers[i]
+            });
+        }
+        if (currentRoundValid) {
+            isValid = true;
+            finalMatches = tempMatches;
         }
     }
 
-    // --- 核心演算 v3.0：改為抽提供者的禮物 (不抽到自己的禮物) ---
-    function calculateRobustMatches() {
-        // 1. 找出所有提供禮物的人 (Providers)
-        let providers = participantsData.filter(p => p.gift).map(p => p.name);
-        // 2. 找出所有收禮物的人 (Receivers)
-        let receivers = participantsData.map(p => p.name);
-        
-        let isValid = false;
-        let attempt = 0;
-        let finalMatches = [];
+    if (isValid) {
+        shuffle(finalMatches); 
+        drawPool = finalMatches;
+        return true;
+    }
+    return false;
+}
 
-        // 循環嘗試配對，直到找到有效組合 (收禮者 != 提供者)
-        while (!isValid && attempt < 5000) {
-            attempt++;
-            
-            // 每次嘗試都重新洗牌
-            shuffle(receivers);
-            shuffle(providers); 
-
-            let tempMatches = [];
-            let currentRoundValid = true;
-            
-            // 配對數量取決於禮物的數量（即提供者的數量）
-            for (let i = 0; i < providers.length; i++) {
-                // 必須要有足夠的收禮者來對應禮物
-                if (i >= receivers.length) {
-                    currentRoundValid = false; // 理論上不該發生，除非 participantsData 結構異常
-                    break;
-                }
-
-                const receiver = receivers[i];
-                const provider = providers[i];
-
-                if (receiver === provider) {
-                    currentRoundValid = false;
-                    break;  
-                }
-
-                tempMatches.push({
-                    winner: receiver, // 收禮者
-                    prize: `恭喜抽到 ${provider} 的禮物`, // 顯示提供者名字
-                    provider: provider // 禮物提供者
-                });
-            }
-
-            if (currentRoundValid) {
-                isValid = true;
-                finalMatches = tempMatches;
-            }
-        }
-
-        if (isValid) {
-            // 最後再將抽獎順序打亂，確保結果的公平性
-            shuffle(finalMatches); 
-            drawPool = finalMatches;
-            console.log(`配對成功，嘗試次數: ${attempt}`);
-            return true;
-        }
-        return false;
+function drawNext() {
+    if (isAnimating) return;
+    
+    // 檢查是否進入終極大獎階段
+    if (currentIndex >= drawPool.length && !isUltimateStage) {
+        startUltimateDraw();
+        return;
     }
 
-    function drawNext() {
-        if (isAnimating) return;
-        if (currentIndex >= drawPool.length) return;
+    isAnimating = true;
+    const btn = document.getElementById('drawBtn');
+    const winnerEl = document.getElementById('winnerDisplay');
+    const giftBoxEl = document.getElementById('giftBox');
+    
+    btn.disabled = true;
+    giftBoxEl.classList.remove('show');
+    
+    const countLimit = 35;
+    let count = 0;
+    
+    // 如果是終極大獎，目標從「非大隻」名單中選
+    let targetResult;
+    let rollNames = participantsData.map(p => p.name);
 
-        isAnimating = true;
-        const btn = document.getElementById('drawBtn');
-        const winnerEl = document.getElementById('winnerDisplay');
-        const giftBoxEl = document.getElementById('giftBox');
-        
-        btn.disabled = true;
-        giftBoxEl.classList.remove('show');
-        
-        const countLimit = 30;
-        let count = 0;
-        const targetResult = drawPool[currentIndex];
-        // 參與者名單用於滾動效果
-        const allNames = participantsData.map(p => p.name);
-
-        const interval = setInterval(() => {
-            // 從所有參與者中隨機選取名字進行滾動
-            const randomName = allNames[Math.floor(Math.random() * allNames.length)];
-            winnerEl.innerText = randomName;
-            winnerEl.style.opacity = 0.8;
-            
-            // 微微縮放特效
-            const scale = 0.9 + Math.random() * 0.2;
-            winnerEl.style.transform = `scale(${scale})`;
-            
-            count++;
-            if (count >= countLimit) {
-                clearInterval(interval);
-                winnerEl.style.transform = "scale(1)";
-                revealWinner(targetResult);
-            }
-        }, 60);
+    if (isUltimateStage) {
+        const candidates = participantsData.filter(p => p.name !== '大隻');
+        const luckyOne = candidates[Math.floor(Math.random() * candidates.length)];
+        targetResult = {
+            winner: luckyOne.name,
+            prize: "✨ 終極大獎 ✨",
+            provider: "大隻 (特別贊助)"
+        };
+    } else {
+        targetResult = drawPool[currentIndex];
     }
 
-    function revealWinner(result) {
-        const winnerEl = document.getElementById('winnerDisplay');
-        const giftBoxEl = document.getElementById('giftBox');
-        const giftNameEl = document.getElementById('giftNameDisplay');
-        const providerEl = document.getElementById('providerDisplay');
-        const btn = document.getElementById('drawBtn');
+    const interval = setInterval(() => {
+        const randomName = rollNames[Math.floor(Math.random() * rollNames.length)];
+        winnerEl.innerText = randomName;
+        winnerEl.style.transform = `scale(${0.9 + Math.random() * 0.3})`;
+        
+        count++;
+        if (count >= countLimit) {
+            clearInterval(interval);
+            winnerEl.style.transform = "scale(1)";
+            revealWinner(targetResult);
+        }
+    }, 60);
+}
 
-        // 1. 鎖定得獎者
-        winnerEl.innerText = result.winner;
-        winnerEl.style.opacity = 1;
-        winnerEl.style.color = 'var(--secondary)'; // 主色變為柔和白色
-        winnerEl.style.textShadow = "0 0 50px rgba(179, 136, 77, 0.8)"; // 金色光暈
+function revealWinner(result) {
+    const winnerEl = document.getElementById('winnerDisplay');
+    const giftBoxEl = document.getElementById('giftBox');
+    const giftNameEl = document.getElementById('giftNameDisplay');
+    const providerEl = document.getElementById('providerDisplay');
+    const btn = document.getElementById('drawBtn');
 
-        // 2. 顯示禮物 (延遲)
+    winnerEl.innerText = result.winner;
+    
+    // 終極大獎特效
+    if (isUltimateStage) {
+        winnerEl.style.color = "#fff";
+        winnerEl.style.textShadow = "0 0 20px #fff, 0 0 40px #b3884d, 0 0 60px #b3884d";
+        document.body.style.transition = "0.3s";
+        document.body.style.boxShadow = "inset 0 0 100px #b3884d";
+        
         setTimeout(() => {
-            // *** 這裡使用新的顯示邏輯 ***
-            giftNameEl.innerText = result.prize; // 顯示: 恭喜抽到 [提供者] 的禮物
-            providerEl.innerText = `🎉 妖壽讚`; // 顯示: 驚喜提示
-            
+            giftNameEl.innerHTML = `<span style="color:#fff">⭐ XGPU 一年份 ⭐</span><br>${result.prize}`;
+            providerEl.innerText = `恭喜！全場最尊榮！神運開局！`;
             giftBoxEl.classList.add('show');
+            addHistory(result, true);
             
-            addHistory(result);
+            btn.innerText = "🎊 抽獎圓滿結束 🎊";
+            btn.disabled = true;
+            isAnimating = false;
+        }, 1000);
+        
+    } else {
+        // 一般獲獎
+        setTimeout(() => {
+            giftNameEl.innerText = result.prize;
+            providerEl.innerText = `🎉 妖壽讚`;
+            giftBoxEl.classList.add('show');
+            addHistory(result, false);
             
             currentIndex++;
             document.getElementById('remainingCount').innerText = drawPool.length - currentIndex;
             isAnimating = false;
-            
+
             if (currentIndex >= drawPool.length) {
-                btn.innerText = "🎊 抽獎圓滿結束 🎊";
-                btn.disabled = true;
-                btn.style.background = "#27272a";
-                btn.style.borderColor = "#52525b";
+                btn.innerText = "💥 揭曉最後的：終極大獎 💥";
+                btn.style.background = "linear-gradient(135deg, #b3884d 0%, #5d4037 100%)";
+                btn.style.color = "#fff";
+                btn.disabled = false;
             } else {
                 btn.disabled = false;
             }
         }, 800);
     }
+}
 
-    function addHistory(result) {
-        const list = document.getElementById('historyList');
-        const emptyMsg = document.getElementById('emptyMsg');
-        if (emptyMsg) emptyMsg.remove();
+function startUltimateDraw() {
+    isUltimateStage = true;
+    const winnerEl = document.getElementById('winnerDisplay');
+    const giftBoxEl = document.getElementById('giftBox');
+    
+    winnerEl.innerText = "準備揭曉...";
+    giftBoxEl.classList.remove('show');
+    drawNext();
+}
 
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `
-            <div class="h-winner">👑 ${result.winner}</div>
-            <div class="h-gift-info">
-                <div class="h-gift">${result.prize}</div>
-                <span class="h-provider">from ${result.provider}</span>
-            </div>
-        `;
-        
-        list.prepend(div);
+function addHistory(result, isUltimate) {
+    const list = document.getElementById('historyList');
+    const emptyMsg = document.getElementById('emptyMsg');
+    if (emptyMsg) emptyMsg.remove();
+
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    if (isUltimate) {
+        div.style.border = "2px solid #b3884d";
+        div.style.background = "rgba(179, 136, 77, 0.2)";
     }
-
+    div.innerHTML = `
+        <div class="h-winner">${isUltimate ? '🌟' : '👑'} ${result.winner}</div>
+        <div class="h-gift-info">
+            <div class="h-gift">${result.prize}</div>
+            <span class="h-provider">from ${result.provider}</span>
+        </div>
+    `;
+    list.prepend(div);
+}
 </script>
 </body>
 </html>
